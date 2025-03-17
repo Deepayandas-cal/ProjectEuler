@@ -10,24 +10,23 @@ def mod_mult(a, b, mod):
 def mod_exp(base, exp, mod):
     result = 1
     while exp:
-        if exp & 1:
+        if exp % 2:
             result = mod_mult(result, base, mod)
         base = mod_mult(base, base, mod)
-        exp >>= 1
+        exp //= 2
     return result
 
-def is_prime(n):
-    if n < 2 or (n % 2 == 0 and n != 2):
-        return False
-    if n in (2, 3):
-        return True
-
-    d, r = n - 1, 0
+def is_prime(n, tests=5):
+    if n < 2: return False
+    if n in (2, 3): return True
+    if n % 2 == 0: return False
+    
+    r, d = 0, n - 1
     while d % 2 == 0:
-        d //= 2
         r += 1
-
-    for _ in range(5):  
+        d //= 2
+    
+    for _ in range(tests):
         a = random.randint(2, n - 2)
         x = mod_exp(a, d, n)
         if x in (1, n - 1):
@@ -40,7 +39,7 @@ def is_prime(n):
             return False
     return True
 
-def next_prime(n):
+def find_next_prime(n):
     if n % 2 == 0:
         n += 1
     while not is_prime(n):
@@ -49,19 +48,24 @@ def next_prime(n):
 
 def generate_primes(start, count):
     primes = []
-    num = next_prime(start)
+    num = find_next_prime(start)
     while len(primes) < count:
         primes.append(num)
-        num += 2
-        while not is_prime(num):
-            num += 2
+        num = find_next_prime(num + 2)
     return primes
 
 def fibonacci(n, mod):
-    a, b = 0, 1
-    for _ in range(n):
-        a, b = b, (a + b) % mod
-    return a
+    if n in (0, 1):
+        return n
+    
+    def fib_helper(n):
+        if n == 0: return (0, 1)
+        a, b = fib_helper(n // 2)
+        c = mod_mult(a, (b * 2 - a) % mod, mod)
+        d = (mod_mult(a, a, mod) + mod_mult(b, b, mod)) % mod
+        return (d, (c + d) % mod) if n % 2 else (c, d)
+    
+    return fib_helper(n)[0]
 
 def main():
     primes = generate_primes(START, LIMIT)
