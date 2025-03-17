@@ -1,38 +1,39 @@
 import random
 
-MODULO = 1234567891011
-START_PRIME = 10**14
-PRIME_COUNT = 100000
+MOD = 1234567891011
+START = 10**14
+LIMIT = 100000
 
-def mulmod(a, b, mod):
+def mod_mult(a, b, mod):
     return (a * b) % mod
 
-def powmod(base, exp, mod):
-    res = 1
+def mod_exp(base, exp, mod):
+    result = 1
     while exp:
-        if exp % 2:
-            res = mulmod(res, base, mod)
-        base = mulmod(base, base, mod)
-        exp //= 2
-    return res
+        if exp & 1:
+            result = mod_mult(result, base, mod)
+        base = mod_mult(base, base, mod)
+        exp >>= 1
+    return result
 
-def is_prime(n, k=5):
-    if n < 2: return False
-    if n in (2, 3): return True
-    if n % 2 == 0: return False
-    
-    r, d = 0, n - 1
+def is_prime(n):
+    if n < 2 or (n % 2 == 0 and n != 2):
+        return False
+    if n in (2, 3):
+        return True
+
+    d, r = n - 1, 0
     while d % 2 == 0:
-        r += 1
         d //= 2
-    
-    for _ in range(k):
+        r += 1
+
+    for _ in range(5):  
         a = random.randint(2, n - 2)
-        x = powmod(a, d, n)
+        x = mod_exp(a, d, n)
         if x in (1, n - 1):
             continue
         for _ in range(r - 1):
-            x = mulmod(x, x, n)
+            x = mod_mult(x, x, n)
             if x == n - 1:
                 break
         else:
@@ -48,28 +49,23 @@ def next_prime(n):
 
 def generate_primes(start, count):
     primes = []
-    n = next_prime(start)
+    num = next_prime(start)
     while len(primes) < count:
-        primes.append(n)
-        n = next_prime(n + 2)
+        primes.append(num)
+        num += 2
+        while not is_prime(num):
+            num += 2
     return primes
 
 def fibonacci(n, mod):
-    if n == 0: return 0
-    if n == 1: return 1
-    
-    def fib_helper(n):
-        if n == 0: return (0, 1)
-        a, b = fib_helper(n // 2)
-        c = mulmod(a, (b * 2 - a) % mod, mod)
-        d = (mulmod(a, a, mod) + mulmod(b, b, mod)) % mod
-        return (d, (c + d) % mod) if n % 2 else (c, d)
-    
-    return fib_helper(n)[0]
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, (a + b) % mod
+    return a
 
 def main():
-    primes = generate_primes(START_PRIME, PRIME_COUNT)
-    result = sum(fibonacci(p, MODULO) for p in primes) % MODULO
+    primes = generate_primes(START, LIMIT)
+    result = sum(fibonacci(p, MOD) for p in primes) % MOD
     print(result)
 
 if __name__ == "__main__":
